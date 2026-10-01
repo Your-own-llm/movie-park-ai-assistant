@@ -1,84 +1,41 @@
-import os
+import json
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from crewai import Agent, Crew, Process, Task
 
 app = FastAPI(title="Movie Park CrewAI Service")
-
-class Brief(BaseModel):
-    client: str = ""
-    project: str = ""
-    location: str = ""
-    deliverables: str = ""
-    deadline: str = ""
-    budget: str = ""
-    references: str = ""
-    requirements: str = ""
+FIELDS = ["client","project","location","deliverables","deadline","budget","references","requirements"]
 
 class PipelineRequest(BaseModel):
-    input: Brief = Field(default_factory=Brief)
+    input: dict = Field(default_factory=dict)
 
-def make_crew(brief: Brief):
-    context = brief.model_dump_json()
+def make_crew(payload: dict):
+    context = json.dumps(payload, ensure_ascii=False)
+    intake = Agent(role="Production Intake Specialist", goal="Extract only confirmed facts from the visitor conversation and current brief.", backstory="You specialize in commercial film production intake.", verbose=False)
+    analyst = Agent(role="Senior Production Brief Analyst", goal="Normalize information into eight production brief fields.", backstory="You structure creative requests and never invent missing information.", verbose=False)
+    qualifier = Agent(role="Production Qualification Specialist", goal="Identify missing information using objective completeness criteria.", backstory="You qualify inquiries without pricing or availability promises.", verbose=False)
+    handoff = Agent(role="Account Manager Handoff Specialist", goal="Return a machine-readable production handoff.", backstory="You prepare concise internal production handoffs.", verbose=False)
+    t1 = Task(description="Read this visitor context and extract confirmed facts only. Unknown values remain empty. Context: " + context, expected_output="JSON with the eight production fields.", agent=intake)
+    t2 = Task(description="Normalize the intake output. Return ONLY JSON with exactly these keys: " + ", ".join(FIELDS) + ". Use empty strings for unknown values.", expected_output="Strict JSON object with exactly eight fields.", agent=analyst, context=[t1])
+    t3 = Task(description="Count non-empty fields. Return ONLY JSON with score, status, missingFields. Score is completed_fields / 8 * 100.", expected_output="Strict qualification JSON.", agent=qualifier, context=[t2])
+    t4 = Task(description="Return ONLY JSON with brief, qualification, and nextStep. Do not add facts.", expected_output="Strict JSON handoff.", agent=handoff, context=[t2,t3])
+    return Crew(agents=[intake,analyst,qualifier,handoff], tasks=[t1,t2,t3,t4], process=Process.sequential, verbose=False)
 
-    intake = Agent(
-        role="Production Intake Specialist",
-        goal="Extract factual production requirements without inventing missing data.",
-        backstory="You understand commercial film, branded content, live action, CGI, VFX and social production workflows.",
-        verbose=False
-    )
-    analyst = Agent(
-        role="Senior Production Brief Analyst",
-        goal="Turn the inquiry into a concise production-ready brief.",
-        backstory="You structure creative requests for account managers.",
-        verbose=False
-    )
-    qualifier = Agent(
-        role="Production Qualification Specialist",
-        goal="Identify missing information and assess inquiry completeness without commercial commitments.",
-        backstory="You use objective completeness criteria.",
-        verbose=False
-    )
-    handoff = Agent(
-        role="Account Manager Handoff Specialist",
-        goal="Prepare a clean internal handoff using only established information.",
-        backstory="You create concise production summaries and next steps.",
-        verbose=False
-    )
-
-    t1 = Task(
-        description=f"Extract confirmed production facts and missing fields from: {context}",
-        expected_output="Confirmed production requirements and missing fields.",
-        agent=intake
-    )
-    t2 = Task(
-        description="Create a concise production brief. Preserve unknown values as unknown.",
-        expected_output="Structured production brief.",
-        agent=analyst, context=[t1]
-    )
-    t3 = Task(
-        description="Assess completeness. Return QUALIFIED, REVIEW REQUIRED, or NEEDS DETAILS and identify missing information. Do not estimate price or promise availability.",
-        expected_output="Qualification status, completeness score and missing fields.",
-        agent=qualifier, context=[t2]
-    )
-    t4 = Task(
-        description="Create a JSON-friendly account-manager handoff with brief, qualification and next step.",
-        expected_output="Structured account-manager handoff.",
-        agent=handoff, context=[t2, t3]
-    )
-
-    return Crew(
-        agents=[intake, analyst, qualifier, handoff],
-        tasks=[t1, t2, t3, t4],
-        process=Process.sequential,
-        verbose=False
-    )
+def parse_json(value):
+    text = str(value).strip()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        text = "\n".join(lines[1:-1]).strip()
+    return json.loads(text)
 
 @app.get("/health")
-def health():
-    return {"ok": True, "service": "movie-park-crewai"}
+def health(): return {"ok": True, "service": "movie-park-crewai"}
 
 @app.post("/run-production-pipeline")
 def run_pipeline(request: PipelineRequest):
-    result = make_crew(request.input).kickoff()
-    return {"provider": "crewai", "raw_output": str(result)}
+    raw = make_crew(request.input).kickoff()
+    try:
+        result = parse_json(raw)
+        return {"provider":"crewai","connected":True,"handoff":result}
+    except Exception as error:
+        return {"provider":"crewai","connected":True,"error":"Structured CrewAI output could not be parsed","detail":str(error)}
