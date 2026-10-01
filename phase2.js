@@ -86,7 +86,7 @@
     save();assistant();
   };
 
-  window.makeBrief=function(){
+  window.continueConversation=function(){ save(); go('/assistant'); };\n\n  window.makeBrief=function(){
     var b={
       client:S.a.brand||'Demo Client',
       project:S.a.projectType||'Commercial Film',
