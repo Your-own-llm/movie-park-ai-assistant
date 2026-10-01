@@ -46,7 +46,7 @@
     };
   }
 
-  window.makeBrief=function(){
+  window.makeBrief=async function(){
     var b={
       client:S.a.brand||'Demo Client',
       project:S.a.projectType||'Commercial Film',
@@ -58,24 +58,16 @@
       requirements:S.a.requirements||'No additional requirements supplied'
     };
     var q=score(b);
-    b.score=q.score;
-    b.status=q.status;
-    S.brief=b;
-
-    var record={
-      id:Date.now(),
-      client:b.client,
-      project:b.project,
-      location:b.location,
-      budget:b.budget,
-      status:q.status==='QUALIFIED'?'Qualified':q.status==='REVIEW REQUIRED'?'Review Required':'New',
-      date:'Just now',
-      score:q.score,
-      assigned:'Unassigned'
-    };
-    S.inq.unshift(record);
-    save();
-    go('/brief');
+    b.score=q.score;b.status=q.status;S.brief=b;
+    try{
+      var response=await fetch('/api/inquiries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({input:b})});
+      var saved=await response.json();
+      if(saved.inquiryId) b.inquiryId=saved.inquiryId;
+    }catch(error){
+      console.warn('Backend inquiry persistence unavailable; keeping local demo state.',error);
+    }
+    var record={id:b.inquiryId||Date.now(),client:b.client,project:b.project,location:b.location,budget:b.budget,status:q.status==='QUALIFIED'?'Qualified':q.status==='REVIEW REQUIRED'?'Review Required':'New',date:'Just now',score:q.score,assigned:'Unassigned'};
+    S.inq.unshift(record);save();go('/brief');
   };
 
   window.admin=function(){
