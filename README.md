@@ -91,3 +91,12 @@ Environment:
 If neither is configured, the handoff is generated locally and no external notification is sent.
 
 The demo does not claim a real CRM record exists. A CRM adapter can be added later behind the same handoff contract.
+
+
+## Phase 7 — Persistent Admin Inquiry State
+
+Production inquiries are now persisted through a backend repository and exposed to the admin layer for listing, detail retrieval, assignment, and contacted status.
+
+The current implementation uses a JSON file repository for zero-dependency persistence. The same repository contract can later be backed by SQLite, Postgres, or Supabase.
+
+Admin operations are intentionally not authenticated yet. Production deployment must add authenticated admin access before exposing these endpoints publicly.
