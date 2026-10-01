@@ -1,21 +1,15 @@
-// Minimal API contract for the future production backend.
-// This file is intentionally dependency-free.
-
-import { runProductionPipeline } from './agents/index.js';
+import { runWithProvider } from './agents/provider.js';
 
 export async function handleProductionInquiry(request) {
   if (!request || request.method !== 'POST') {
     return { status: 405, body: { error: 'POST required' } };
   }
-
-  const body = request.body || {};
-  const result = await runProductionPipeline(body);
-
-  return {
-    status: 200,
-    body: {
-      ok: true,
-      ...result
-    }
-  };
+  try {
+    const result = await runWithProvider(request.body || {}, {
+      mode: process.env.AGENT_PROVIDER || 'local'
+    });
+    return { status: 200, body: { ok: true, ...result } };
+  } catch (error) {
+    return { status: 502, body: { ok: false, error: 'AI orchestration service unavailable', detail: error.message } };
+  }
 }
