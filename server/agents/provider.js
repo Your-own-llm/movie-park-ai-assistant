@@ -10,7 +10,7 @@ function validateCrewResult(result) {
   return {
     ...buildHandoff(brief, q),
     portfolio: result.portfolio || { provider: 'local', results: [] },
-    assistantMessage: result.assistantMessage || null,
+    assistantMessage: result.assistantMessage || result.assistant_message || null,
     llmProvider: 'crewai'
   };
 }
