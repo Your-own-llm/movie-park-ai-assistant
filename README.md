@@ -100,3 +100,18 @@ Production inquiries are now persisted through a backend repository and exposed 
 The current implementation uses a JSON file repository for zero-dependency persistence. The same repository contract can later be backed by SQLite, Postgres, or Supabase.
 
 Admin operations are intentionally not authenticated yet. Production deployment must add authenticated admin access before exposing these endpoints publicly.
+
+
+## Phase 8 — Protected Admin Dashboard
+
+The demo now includes a dependency-free HTTP server and authenticated admin workspace.
+
+- `npm start` starts the API and serves the frontend.
+- `POST /api/admin/login` creates an admin session.
+- `GET /api/admin/inquiries` requires a bearer session token.
+- `GET/PATCH /api/admin/inquiries/:id` requires authentication.
+- `POST /api/inquiries` persists generated production inquiries.
+- The frontend Admin route shows a login screen when unauthenticated.
+- Assignment and Contacted actions use the protected backend API.
+
+Configure `ADMIN_USERNAME` and `ADMIN_PASSWORD` before deployment. The current session implementation is process-local and should be replaced with production-grade expiring secure sessions or managed identity before handling real client data.
