@@ -68,8 +68,8 @@
     try{
       var response=await fetch('/api/ai/intake',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({input:{message:v,conversation:S.msgs.map(function(x){return x.w+': '+x.t}),currentBrief:S.a}})});
       var data=await response.json();
-      if(response.ok && data.brief){
-        var b=data.brief;
+      if(response.ok && data.handoff && data.handoff.brief){
+        var b=data.handoff.brief;
         var map={client:'brand',project:'projectType',location:'location',deliverables:'deliverables',deadline:'deadline',budget:'budget',references:'references',requirements:'requirements'};
         Object.keys(map).forEach(function(k){if(b[k])S.a[map[k]]=b[k]});
         if(data.assistantMessage)S.msgs.push({w:'ai',t:data.assistantMessage});
