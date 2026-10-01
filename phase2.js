@@ -4,6 +4,7 @@
 (function () {
   var STORAGE_KEY = 'movieParkDemoV2';
   var ADMIN_TOKEN_KEY = 'movieParkAdminToken';
+  var busy = false;
 
   function esc(v) {
     return String(v == null ? '' : v)
@@ -20,6 +21,7 @@
   }
 
   function load() {
+    S.step = 0;
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
@@ -126,7 +128,7 @@
         '<div class="chat"><div><div class="messages">' + renderMessages() + '</div>' +
         ready + suggestionChips() +
         '<div class="composer"><input id="inp" placeholder="Ask a question or describe your project…" onkeydown="if(event.key===\'Enter\')answer(this.value)">' +
-        '<button class="btn" onclick="answer(document.getElementById(\'inp\').value)">Send</button></div></div>' +
+        '<button class="btn" ' + (busy ? 'disabled' : '') + ' onclick="answer(document.getElementById(\'inp\').value)">' + (busy ? 'Thinking…' : 'Send') + '</button></div></div>' +
         '<aside class="side"><h3>Project Brief</h3><div class="progress">' +
         '<div class="p ' + (S.a.brand ? 'done' : '') + '"><span></span>Client / Brand</div>' +
         '<div class="p ' + (S.a.projectType ? 'done' : '') + '"><span></span>Project Type</div>' +
@@ -145,10 +147,12 @@
   };
 
   window.answer = async function (value) {
+    if (busy) return;
     var v = (value || '').trim();
     if (!v) return;
 
     S.msgs.push({ w: 'user', t: v });
+    busy = true;
     assistant();
 
     try {
@@ -201,6 +205,8 @@
     } catch (e) {
       console.warn('AI intake unavailable', e);
       S.msgs.push({ w: 'ai', t: 'The AI service is unavailable right now. Your conversation is still saved locally.' });
+    } finally {
+      busy = false;
     }
 
     save();
