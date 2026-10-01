@@ -4,6 +4,7 @@
     "app": {
       "root": ".",
       "runtime": "node",
+      "entrypoint": "server.ts",
       "bindings": [
         {
           "type": "service",
