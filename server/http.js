@@ -6,7 +6,7 @@ import { URL } from 'node:url';
 import { createSession, hasSession, destroySession } from './auth/session.js';
 import { listInquiries, getInquiry, assignInquiry, markInquiryContacted } from './admin/api.js';
 import { runProductionPipeline } from './agents/index.js';
-import { inquiryStore } from './db/store.js';
+import { inquiryStore, initializeStore } from './db/store.js';
 
 const port = Number(process.env.PORT || 3000);
 
@@ -82,4 +82,4 @@ const server = http.createServer(async (req,res)=>{
   }
 });
 
-server.listen(port,()=>console.log('Movie Park AI Assistant API listening on '+port));
+server.listen(port,async()=>{\n  try { await initializeStore(); console.log('Inquiry store initialized: '+(inquiryStore.available?'postgres':'file')); }\n  catch (error) { console.error('Store initialization failed:',error.message); process.exitCode=1; }\n  console.log('Movie Park AI Assistant API listening on '+port);\n});
