@@ -97,7 +97,7 @@
     var group = missing[0];
     return '<div class="quick"><span style="width:100%;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#777">Suggestions · optional</span>' +
       group[1].map(function (x) {
-        return '<button class="chip" onclick="answer(' + JSON.stringify(x) + ')">' + esc(x) + '</button>';
+        return '<button class="chip" onclick="answer(\'' + String(x).replace(/\\/g,'\\\\').replace(/'/g,"\\'") + '\')">' + esc(x) + '</button>';
       }).join('') + '</div>';
   }
 
