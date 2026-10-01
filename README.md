@@ -50,12 +50,18 @@ Demo inquiry state is saved in the visitor's browser using localStorage. No clie
 
 This is a concept demonstration. It is not connected to Movie Park's internal CRM, email, Instagram, WhatsApp, portfolio database, or production systems.
 
+## Phase 3 — Agent Architecture
+
+The repository now contains provider-neutral contracts for an Intake Agent, Brief Analyst, Qualification Agent, Portfolio Matcher, and Account Manager Handoff. The contracts normalize the same eight production fields used by the frontend and return a predictable `production_inquiry` payload.
+
+A dependency-free Node test suite covers normalization, qualification, missing fields, and handoff behavior. No API key or external service is required.
+
 ## Next phases
 
-1. CrewAI orchestration
-2. AnythingLLM knowledge / RAG
-3. Portfolio retrieval and matching
-4. Firecrawl web research
-5. CRM / email / Slack handoff
-6. Database-backed inquiry history
-7. Pipecat voice interface
+1. Connect the agent contract to CrewAI + an LLM provider
+2. Connect AnythingLLM for production knowledge / RAG
+3. Add a real portfolio retrieval index
+4. Add Firecrawl research tools with explicit source boundaries
+5. Add CRM / email / Slack handoff
+6. Replace localStorage with database-backed inquiry history
+7. Add Pipecat voice interface
