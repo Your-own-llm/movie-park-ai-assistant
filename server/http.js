@@ -43,8 +43,6 @@ async function ensureInitialized() {
 
 export default async function handler(req, res) {
   try {
-    await ensureInitialized();
-
     if (req.method === 'OPTIONS') return json(res, 204, {});
 
     const url = new URL(req.url, 'http://localhost');
@@ -54,6 +52,7 @@ export default async function handler(req, res) {
     }
 
     if (url.pathname === '/api/admin/login' && req.method === 'POST') {
+      await ensureInitialized();
       const b = await body(req);
       const result = createSession(b.username, b.password);
       return result.authenticated
@@ -79,18 +78,21 @@ export default async function handler(req, res) {
     }
 
     if (url.pathname === '/api/inquiries' && req.method === 'POST') {
+      await ensureInitialized();
       const result = await runWithProvider((await body(req)).input || {});
       const saved = await inquiryStore.createInquiry(result.handoff);
       return json(res, 200, { ok: true, inquiryId: saved.id, ...result });
     }
 
     if (url.pathname === '/api/admin/inquiries' && req.method === 'GET') {
+      await ensureInitialized();
       const result = await listInquiries(token(req));
       return json(res, result?.status === 401 ? 401 : 200, result);
     }
 
     const match = url.pathname.match(/^\/api\/admin\/inquiries\/([^/]+)$/);
     if (match) {
+      await ensureInitialized();
       const id = match[1];
 
       if (req.method === 'GET') {
