@@ -3,7 +3,7 @@
   "services": {
     "app": {
       "root": ".",
-      "runtime": "node",
+      "framework": "node",
       "entrypoint": "server.ts",
       "bindings": [
         {
