@@ -88,7 +88,7 @@
   function suggestionChips() {
     var missing = [];
     var suggestions = [
-      ['projectType', ['Commercial Film','Product Video','Social Campaign','Fashion Film','CGI / VFX']],
+      ['projectType', ['Commercial Film','Product Video','Social Campaign','Automotive Film','Fashion Film','CGI / VFX']],
       ['deliverables', ['Hero Film','Social Cuts','Product Photography','CGI','Behind the Scenes']],
       ['budget', ['Under $25K','$25K–$50K','$50K–$100K','$100K+','Not decided yet']]
     ];
@@ -98,9 +98,19 @@
     if (!missing.length) return '';
     var group = missing[0];
     return '<div class="quick"><span style="width:100%;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:#777">Suggestions · optional</span>' +
-      group[1].map(function (x) {
-        return '<button class="chip" onclick="answer(\'' + String(x).replace(/\\/g,'\\\\').replace(/'/g,"\\'") + '\')">' + esc(x) + '</button>';
+      group[1].map(function (x, i) {
+        return '<button type="button" class="chip" data-suggestion="' + esc(x) + '" data-suggestion-index="' + i + '">' + esc(x) + '</button>';
       }).join('') + '</div>';
+  }
+
+  function bindSuggestionChips() {
+    var chips = document.querySelectorAll('[data-suggestion]');
+    for (var i = 0; i < chips.length; i++) {
+      chips[i].addEventListener('click', function () {
+        var value = this.getAttribute('data-suggestion');
+        if (value) window.answer(value);
+      });
+    }
   }
 
   function renderMessages() {
@@ -140,6 +150,7 @@
         '<div class="p ' + (S.a.requirements ? 'done' : '') + '"><span></span>Requirements</div>' +
         '</div><div class="note">The assistant answers questions first and only records information that has been confirmed. No real Movie Park internal systems are connected.</div></aside></div></div>'
     );
+    bindSuggestionChips();
   };
 
   window.goBriefFromConversation = function () {
