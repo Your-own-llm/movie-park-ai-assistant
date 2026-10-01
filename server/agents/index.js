@@ -6,23 +6,23 @@ import { researchPublicSource } from '../research/index.js';
 export async function runProductionPipeline(input) {
   let enriched = input || {};
   let llm = null;
-
-  if (process.env.LLM_PROVIDER === 'openai') {
-    try {
-      llm = await runLLM({ ...input, publicResearch: research?.data || null });
-      if (llm) enriched = { ...input, ...llm };
-    } catch (error) {
-      console.warn('LLM provider unavailable; using deterministic pipeline:', error.message);
-    }
-  }
-
   let research = null;
+
   if (input?.sourceUrl) {
     try { research = await researchPublicSource(input.sourceUrl); }
     catch (error) { console.warn('Public research unavailable:', error.message); }
   }
 
   if (research?.data) enriched = { ...enriched, publicResearch: research.data };
+
+  if (process.env.LLM_PROVIDER === 'openai') {
+    try {
+      llm = await runLLM({ ...enriched, publicResearch: research?.data || null });
+      if (llm) enriched = { ...enriched, ...llm };
+    } catch (error) {
+      console.warn('LLM provider unavailable; using deterministic pipeline:', error.message);
+    }
+  }
 
   const brief = normalizeBrief(enriched);
   const result = qualification(brief);
