@@ -1,0 +1,30 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "app": {
+      "root": ".",
+      "runtime": "node",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "crewai",
+          "format": "url",
+          "env": "CREWAI_INTERNAL_URL"
+        }
+      ]
+    },
+    "crewai": {
+      "root": "crewai",
+      "framework": "fastapi",
+      "entrypoint": "app:app"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "app"
+      }
+    }
+  ]
+}
