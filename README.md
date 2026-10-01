@@ -78,3 +78,16 @@ Environment:
 - optional `FIRECRAWL_URL`
 
 Without a Firecrawl key, the application remains functional and makes no external research request.
+
+
+## Phase 6 — Account Manager Handoff
+
+The API can now turn a production inquiry into a structured account-manager handoff. Optional notification adapters are available for a generic webhook and Slack incoming webhook.
+
+Environment:
+- `HANDOFF_WEBHOOK_URL` — optional generic webhook
+- `SLACK_WEBHOOK_URL` — optional Slack incoming webhook
+
+If neither is configured, the handoff is generated locally and no external notification is sent.
+
+The demo does not claim a real CRM record exists. A CRM adapter can be added later behind the same handoff contract.
