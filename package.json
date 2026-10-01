@@ -1,0 +1,10 @@
+{
+  "name": "movie-park-ai-production-assistant",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "Concept architecture for an AI-assisted production inquiry workflow.",
+  "scripts": {
+    "test": "node --test"
+  }
+}
