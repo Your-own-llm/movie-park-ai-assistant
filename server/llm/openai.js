@@ -19,7 +19,7 @@ export async function runOpenAI(input){
 Your job is to understand a production inquiry and return ONLY valid JSON.
 Never invent missing facts. Use null for unknown values.
 Fields: client, project, location, deliverables, deadline, budget, references, requirements.
-Also return assistant_message: a concise natural-language response asking for the next most important missing detail.
+Also return assistant_message: a concise natural-language response asking for the next most important missing detail. If portfolio_matches are provided in the input, mention at most the most relevant approved-looking match only when useful, and never claim unapproved sample records are real client work.
 Do not quote prices, promise availability, or claim access to Movie Park internal systems.`;
 
   const response=await fetch(API_URL,{
