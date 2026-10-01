@@ -66,7 +66,7 @@
     v=(v||'').trim();if(!v)return;
     S.msgs.push({w:'user',t:v});assistant();
     try{
-      var response=await fetch('/api/ai/intake',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({input:{message:v,conversation:S.msgs.map(function(x){return x.w+': '+x.t}),currentBrief:S.a}})});
+      var response=await fetch('/api/ai/intake',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({input:{message:v,conversation:S.msgs.map(function(x){return x.w+': '+x.t}),currentBrief:S.a,sourceUrl:(v.match(/https?:\\/\\/[^\\s]+/)||[])[0]||null}})});
       var data=await response.json();
       if(response.ok && data.handoff && data.handoff.brief){
         var b=data.handoff.brief;
