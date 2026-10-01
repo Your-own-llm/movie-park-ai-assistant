@@ -1,0 +1,32 @@
+[
+  {
+    "id": "sample-automotive-film",
+    "title": "Automotive Commercial Concept",
+    "category": "Automotive",
+    "services": ["Live Action", "Cinematography", "Post Production"],
+    "location": "Dubai",
+    "keywords": ["automotive", "car", "commercial", "cinematic", "CGI"],
+    "description": "Placeholder knowledge record for an automotive commercial.",
+    "sourceUrl": ""
+  },
+  {
+    "id": "sample-luxury-product",
+    "title": "Luxury Product Film Concept",
+    "category": "Luxury Product",
+    "services": ["Product Film", "Lighting", "Post Production"],
+    "location": "Dubai",
+    "keywords": ["luxury", "product", "premium", "commercial", "beauty"],
+    "description": "Placeholder knowledge record for a luxury product campaign.",
+    "sourceUrl": ""
+  },
+  {
+    "id": "sample-social-campaign",
+    "title": "Social Campaign Concept",
+    "category": "Social",
+    "services": ["Branded Content", "Social Video", "Editing"],
+    "location": "UAE",
+    "keywords": ["social", "short-form", "campaign", "vertical video", "content"],
+    "description": "Placeholder knowledge record for a social campaign.",
+    "sourceUrl": ""
+  }
+]
