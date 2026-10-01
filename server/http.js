@@ -1,4 +1,7 @@
 import http from 'node:http';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { URL } from 'node:url';
 import { createSession, hasSession, destroySession } from './auth/session.js';
 import { listInquiries, getInquiry, assignInquiry, markInquiryContacted } from './admin/api.js';
@@ -68,6 +71,11 @@ const server = http.createServer(async (req,res)=>{
       }
     }
 
+    if(req.method==='GET' && (url.pathname==='/' || url.pathname.startsWith('/phase2.js'))){
+      const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+      const file=url.pathname==='/' ? path.join(root,'index.html') : path.join(root,url.pathname.slice(1));
+      try { const data=await fs.readFile(file); res.writeHead(200,{'Content-Type':url.pathname.endsWith('.js')?'application/javascript':'text/html'}); return res.end(data); } catch {}
+    }
     return json(res,404,{ok:false,error:'Not found'});
   } catch(error) {
     return json(res,500,{ok:false,error:error.message});
