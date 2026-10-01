@@ -20,9 +20,15 @@ export async function runProductionPipeline(input) {
   const query = [brief.project, brief.deliverables, brief.requirements, brief.location]
     .filter(Boolean).join(' ');
 
-  const portfolio = query
-    ? await searchPortfolio(query, { limit: 3 })
-    : { provider: 'local', results: [] };
+  let portfolio = { provider: 'local', results: [] };
+  if (query) {
+    try {
+      portfolio = await searchPortfolio(query, { limit: 3 });
+    } catch (error) {
+      console.warn('Portfolio provider unavailable; using local matcher:', error.message);
+      portfolio = await searchPortfolio(query, { limit: 3, mode: 'local' });
+    }
+  }
 
   return {
     ...buildHandoff(brief, result),
