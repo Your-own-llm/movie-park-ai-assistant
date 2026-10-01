@@ -65,3 +65,16 @@ A dependency-free Node test suite covers normalization, qualification, missing f
 5. Add CRM / email / Slack handoff
 6. Replace localStorage with database-backed inquiry history
 7. Add Pipecat voice interface
+
+
+## Phase 5 — Public Research / Firecrawl
+
+An optional Firecrawl research layer is available under `server/research/`. It is deliberately restricted to approved public HTTPS domains and currently allowlists Movie Park's public domain only. It does not access authenticated pages or internal systems.
+
+Public research is kept separate from the AnythingLLM knowledge layer. Scraped information should be reviewed before being treated as trusted portfolio knowledge.
+
+Environment:
+- `FIRECRAWL_API_KEY`
+- optional `FIRECRAWL_URL`
+
+Without a Firecrawl key, the application remains functional and makes no external research request.
