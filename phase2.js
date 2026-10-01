@@ -93,40 +93,22 @@
   };
 
   window.detail=function(id){
-    var x=S.inq[0];
-    for(var i=0;i<S.inq.length;i++){
-      if(String(S.inq[i].id)===String(id)){x=S.inq[i];break;}
-    }
-    if(!x){go('/admin');return;}
-
-    var scoreText=x.score!==undefined?x.score+'/100':'Not scored';
-    el('<div class="shell"><button class="back" onclick="go(\'/admin\')">← Back to Inquiries</button>'+
-      '<div class="ey">Inquiry #'+x.id+'</div><h2>'+x.client+'</h2>'+
-      '<div class="card"><div class="detailGrid"><div>'+
-      '<div class="label">Project</div><div class="value">'+x.project+'</div>'+
-      '<div class="label">Location</div><div class="value">'+x.location+'</div>'+
-      '<div class="label">Budget</div><div class="value">'+x.budget+'</div>'+
-      '<div class="label">Qualification</div><div class="value">'+scoreText+'</div>'+
-      '<span class="badge">'+x.status+'</span></div>'+
-      '<div><div class="ey">AI Summary</div>'+
-      '<p class="sub">The inquiry has been converted into structured production data. The qualification score is based on the completeness of project type, location, deliverables, timeline, budget and creative requirements.</p>'+
-      '<div class="row"><span>Assigned To</span><b>'+(x.assigned||'Unassigned')+'</b></div>'+
-      '<div class="actions"><button class="btn" onclick="assignInquiry('+x.id+')">Assign Account Manager</button>'+
-      '<button class="btn alt" onclick="contactInquiry('+x.id+')">Mark as Contacted</button></div></div></div>'+
-      '<div class="conversation"><div class="ey">Conversation</div>'+
-      '<div class="mini"><b>AI Assistant</b>Tell me what you’re looking to produce, and I’ll help turn your idea into a structured production brief.</div>'+
-      '<div class="mini"><b>Client</b>We need a premium commercial campaign with a hero film and social cuts.</div>'+
-      '<div class="mini"><b>AI Assistant</b>I’ve captured the scope and prepared the inquiry for production review.</div></div></div></div>');
+    if(!token()){go('/admin');return}
+    fetch('/api/admin/inquiries/'+encodeURIComponent(id),{headers:{Authorization:'Bearer '+token()}}).then(function(r){if(r.status===401){logout();return null}return r.json()}).then(function(x){
+      if(!x||x.error){go('/admin');return}
+      var scoreText=x.score!==undefined?x.score+'/100':'Not scored';
+      var p=x.payload||x;
+      var b=p.brief||p;
+      el('<div class="shell"><button class="back" onclick="go(\\'/admin\\')">← Back to Inquiries</button><div class="ey">Inquiry #'+x.id+'</div><h2>'+(b.client||'Inquiry')+'</h2><div class="card"><div class="detailGrid"><div><div class="label">Project</div><div class="value">'+(b.project||'—')+'</div><div class="label">Location</div><div class="value">'+(b.location||'—')+'</div><div class="label">Budget</div><div class="value">'+(b.budget||'—')+'</div><div class="label">Qualification</div><div class="value">'+scoreText+'</div><span class="badge">'+(x.status||'New')+'</span></div><div><div class="ey">AI Summary</div><p class="sub">This inquiry has been converted into structured production data for account-manager review.</p><div class="row"><span>Assigned To</span><b>'+(x.assignedTo||'Unassigned')+'</b></div><div class="actions"><button class="btn" onclick="assignInquiry(\\''+x.id+'\\')">Assign Account Manager</button><button class="btn alt" onclick="contactInquiry(\\''+x.id+'\\')">Mark as Contacted</button></div></div></div></div></div>');
+    });
   };
 
   window.assignInquiry=function(id){
-    var x=S.inq.find(function(i){return String(i.id)===String(id);});
-    if(x){x.status='Review Required';x.assigned='Account Manager';save();detail(id);}
+    fetch('/api/admin/inquiries/'+encodeURIComponent(id),{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token()},body:JSON.stringify({assignedTo:'Account Manager'})}).then(function(){detail(id)});
   };
 
   window.contactInquiry=function(id){
-    var x=S.inq.find(function(i){return String(i.id)===String(id);});
-    if(x){x.status='Contacted';x.assigned='Account Manager';save();detail(id);}
+    fetch('/api/admin/inquiries/'+encodeURIComponent(id),{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token()},body:JSON.stringify({action:'contact'})}).then(function(){detail(id)});
   };
 
   var originalRender=window.render;
