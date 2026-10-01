@@ -1,15 +1,18 @@
 import { runWithProvider } from './agents/provider.js';
 import { handoffInquiry } from './handoff/index.js';
+import { inquiryStore } from './db/store.js';
 
 export async function handleProductionInquiry(request) {
   if (!request || request.method !== 'POST') {
     return { status: 405, body: { error: 'POST required' } };
   }
+
   try {
     const result = await runWithProvider(request.body || {}, {
       mode: process.env.AGENT_PROVIDER || 'local'
     });
 
+    const persisted = await inquiryStore.createInquiry(result);
     const handoff = await handoffInquiry(result, {
       webhook: Boolean(process.env.HANDOFF_WEBHOOK_URL),
       slack: Boolean(process.env.SLACK_WEBHOOK_URL)
@@ -17,7 +20,7 @@ export async function handleProductionInquiry(request) {
 
     return {
       status: 200,
-      body: { ok: true, ...result, handoff }
+      body: { ok: true, inquiryId: persisted.id, ...result, handoff }
     };
   } catch (error) {
     return {
