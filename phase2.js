@@ -46,6 +46,46 @@
     };
   }
 
+  function aiEnabled(){return true}
+  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+  function filledCount(){
+    var keys=['brand','projectType','location','deliverables','deadline','budget','references','requirements'];
+    return keys.filter(function(k){return S.a[k] && String(S.a[k]).trim()}).length;
+  }
+
+  window.assistant=function(){
+    if(!S.msgs.length)S.msgs=[{w:'ai',t:'Hi. I’m the AI Production Assistant. Tell me what you’re looking to produce, and I’ll turn the conversation into a structured production brief.'}];
+    var m='';
+    for(var i=0;i<S.msgs.length;i++)m+='<div class="msg '+S.msgs[i].w+'"><small>'+(S.msgs[i].w==='ai'?'AI Assistant':'You')+'</small>'+esc(S.msgs[i].t)+'</div>';
+    var composer='<input id="inp" placeholder="Describe your project, scope, timing, budget, or anything you know…" onkeydown="if(event.key===\'Enter\')answer(this.value)"><button class="btn" onclick="answer(document.getElementById(\'inp\').value)">Send</button>';
+    var ready=filledCount()>=5?'<button class="btn alt" onclick="makeBrief()">Generate Project Brief →</button>':'';
+    el('<div class="shell"><div class="top"><div><div class="ey">AI Production Assistant</div><h2>Start a Project Brief</h2><div class="sub">Tell the assistant about the project naturally. It will extract the production requirements as you chat.</div></div><div class="tag">Concept Demo · AI Intake</div></div><div class="chat"><div><div class="messages">'+m+'</div><div class="quick">'+ready+'</div><div class="composer">'+composer+'</div></div><aside class="side"><h3>Project Brief</h3><div class="progress"><div class="p '+(S.a.brand?'done':'')+'"><span></span>Client / Brand</div><div class="p '+(S.a.projectType?'done':'')+'"><span></span>Project Type</div><div class="p '+(S.a.location?'done':'')+'"><span></span>Location</div><div class="p '+(S.a.deliverables?'done':'')+'"><span></span>Deliverables</div><div class="p '+(S.a.deadline?'done':'')+'"><span></span>Timeline</div><div class="p '+(S.a.budget?'done':'')+'"><span></span>Budget</div><div class="p '+(S.a.references?'done':'')+'"><span></span>References</div><div class="p '+(S.a.requirements?'done':'')+'"><span></span>Requirements</div></div><div class="note">AI intake is connected through the backend when an LLM provider is configured. No real Movie Park internal systems are connected.</div></aside></div></div>');
+  }
+
+  window.answer=async function(v){
+    v=(v||'').trim();if(!v)return;
+    S.msgs.push({w:'user',t:v});assistant();
+    try{
+      var response=await fetch('/api/ai/intake',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({input:{message:v,conversation:S.msgs.map(function(x){return x.w+': '+x.t}),currentBrief:S.a}})});
+      var data=await response.json();
+      if(response.ok && data.brief){
+        var b=data.brief;
+        var map={client:'brand',project:'projectType',location:'location',deliverables:'deliverables',deadline:'deadline',budget:'budget',references:'references',requirements:'requirements'};
+        Object.keys(map).forEach(function(k){if(b[k])S.a[map[k]]=b[k]});
+        if(data.assistantMessage)S.msgs.push({w:'ai',t:data.assistantMessage});
+        else S.msgs.push({w:'ai',t:'I’ve updated the project brief. What important detail should we add next?'});
+      }else if(data.assistantMessage){
+        S.msgs.push({w:'ai',t:data.assistantMessage});
+      }else{
+        S.msgs.push({w:'ai',t:'I couldn’t reach the AI service, so I’m keeping your message in the demo conversation. You can continue or generate the brief.'});
+      }
+    }catch(e){
+      console.warn('AI intake unavailable',e);
+      S.msgs.push({w:'ai',t:'The AI service is not available right now. Your conversation is still saved locally.'});
+    }
+    save();assistant();
+  };
+
   window.makeBrief=async function(){
     var b={
       client:S.a.brand||'Demo Client',
@@ -62,10 +102,8 @@
     try{
       var response=await fetch('/api/inquiries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({input:b})});
       var saved=await response.json();
-      if(saved.inquiryId) b.inquiryId=saved.inquiryId;
-    }catch(error){
-      console.warn('Backend inquiry persistence unavailable; keeping local demo state.',error);
-    }
+      if(saved.inquiryId)b.inquiryId=saved.inquiryId;
+    }catch(error){console.warn('Backend inquiry persistence unavailable; keeping local demo state.',error)}
     var record={id:b.inquiryId||Date.now(),client:b.client,project:b.project,location:b.location,budget:b.budget,status:q.status==='QUALIFIED'?'Qualified':q.status==='REVIEW REQUIRED'?'Review Required':'New',date:'Just now',score:q.score,assigned:'Unassigned'};
     S.inq.unshift(record);save();go('/brief');
   };
