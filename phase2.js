@@ -164,7 +164,7 @@
             message: v,
             conversation: S.msgs.map(function (x) { return x.w + ': ' + x.t; }),
             currentBrief: S.a,
-            sourceUrl: (v.match(/https?:\\/\\/[^\\s]+/) || [])[0] || null
+            sourceUrl: (v.match(/https?:\/\/[^\s]+/) || [])[0] || null
           }
         })
       });
