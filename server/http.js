@@ -7,6 +7,7 @@ import { createSession, hasSession, destroySession } from './auth/session.js';
 import { listInquiries, getInquiry, assignInquiry, markInquiryContacted } from './admin/api.js';
 import { runProductionPipeline } from './agents/index.js';
 import { inquiryStore, initializeStore } from './db/store.js';
+import { researchPublicSource } from './research/index.js';
 
 const port = Number(process.env.PORT || 3000);
 
@@ -46,6 +47,13 @@ const server = http.createServer(async (req,res)=>{
     if(url.pathname==='/api/ai/intake' && req.method==='POST'){
       const result=await runProductionPipeline((await body(req)).input || {});
       return json(res,200,{ok:true,...result});
+    }
+
+    if(url.pathname==='/api/research/public' && req.method==='POST'){
+      const b=await body(req);
+      if(!b.url) return json(res,400,{ok:false,error:'url is required'});
+      const result=await researchPublicSource(b.url);
+      return json(res,result.accepted===false?400:200,{ok:true,...result});
     }
 
     if(url.pathname==='/api/inquiries' && req.method==='POST'){
