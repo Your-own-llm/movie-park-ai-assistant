@@ -26,6 +26,8 @@
       var d = JSON.parse(raw);
       if (d.a) S.a = d.a;
       if (d.msgs) S.msgs = d.msgs;
+      var legacy = Array.isArray(S.msgs) && S.msgs.some(function (m) { return /What is the brand or company name\?|Where would the production take place\?|What deliverables are you looking for\?/.test(m.t || ''); });
+      if (legacy) { S.a = {}; S.msgs = []; S.brief = null; }
       if (d.brief) S.brief = d.brief;
       if (d.inq) S.inq = d.inq;
     } catch (e) {}
