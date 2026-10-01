@@ -58,6 +58,10 @@
     var m='';
     for(var i=0;i<S.msgs.length;i++)m+='<div class="msg '+S.msgs[i].w+'"><small>'+(S.msgs[i].w==='ai'?'AI Assistant':'You')+'</small>'+esc(S.msgs[i].t)+'</div>';
     var composer='<input id="inp" placeholder="Describe your project, scope, timing, budget, or anything you know…" onkeydown="if(event.key===\'Enter\')answer(this.value)"><button class="btn" onclick="answer(document.getElementById(\'inp\').value)">Send</button>';
+    var chips='';
+    if(S.msgs.length<=1){
+      ['Commercial Film','Product Video','Social Campaign','Automotive Film','Fashion Film','CGI / VFX'].forEach(function(x){chips+='<button class="chip" onclick="answer('+JSON.stringify(x)+')">'+esc(x)+'</button>'});
+    }
     var ready=filledCount()>=5?'<button class="btn alt" onclick="makeBrief()">Review Project Brief →</button>':'';
     el('<div class="shell"><div class="top"><div><div class="ey">AI Production Assistant</div><h2>Start a Project Brief</h2><div class="sub">Tell the assistant about the project naturally. It will extract the production requirements as you chat.</div></div><div class="tag">Concept Demo · AI Intake</div></div><div class="chat"><div><div class="messages">'+m+'</div><div class="quick">'+ready+'</div><div class="composer">'+composer+'</div></div><aside class="side"><h3>Project Brief</h3><div class="progress"><div class="p '+(S.a.brand?'done':'')+'"><span></span>Client / Brand</div><div class="p '+(S.a.projectType?'done':'')+'"><span></span>Project Type</div><div class="p '+(S.a.location?'done':'')+'"><span></span>Location</div><div class="p '+(S.a.deliverables?'done':'')+'"><span></span>Deliverables</div><div class="p '+(S.a.deadline?'done':'')+'"><span></span>Timeline</div><div class="p '+(S.a.budget?'done':'')+'"><span></span>Budget</div><div class="p '+(S.a.references?'done':'')+'"><span></span>References</div><div class="p '+(S.a.requirements?'done':'')+'"><span></span>Requirements</div></div><div class="note">AI intake is connected through the backend when an LLM provider is configured. No real Movie Park internal systems are connected.</div></aside></div></div>');
   }
