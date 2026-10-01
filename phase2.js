@@ -3,6 +3,11 @@
 
 (function(){
   var STORAGE_KEY='movieParkDemoV2';
+  var ADMIN_TOKEN_KEY='movieParkAdminToken';
+  function token(){try{return localStorage.getItem(ADMIN_TOKEN_KEY)||''}catch(e){return ''}}
+  function logout(){localStorage.removeItem(ADMIN_TOKEN_KEY);go('/admin')}
+  async function login(){var u=document.getElementById('adminUser').value,p=document.getElementById('adminPass').value;var r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});var d=await r.json();if(!r.ok){document.getElementById('adminError').textContent=d.error||'Login failed';return}localStorage.setItem(ADMIN_TOKEN_KEY,d.token);admin()}
+  window.adminLogin=login; window.adminLogout=logout;
 
   function save(){
     try{
@@ -74,25 +79,17 @@
   };
 
   window.admin=function(){
-    var counts={New:0,Qualified:0,'Review Required':0,Contacted:0};
-    var rows='';
-    S.inq.forEach(function(x){
-      counts[x.status]=(counts[x.status]||0)+1;
-      rows+='<tr class="click" onclick="go(\'/admin/inquiries/'+x.id+'\')">'+
-        '<td><b>'+x.client+'</b></td><td>'+x.project+'</td><td>'+x.location+'</td>'+
-        '<td>'+x.budget+'</td><td><span class="badge">'+x.status+'</span></td><td>'+x.date+'</td></tr>';
+    if(!token()){
+      el('<div class="shell"><div class="ey">Protected workspace</div><h2>Account Manager Login</h2><p class="sub">Admin access is required to view production inquiries.</p><div class="card" style="max-width:520px"><div class="label">Username</div><input id="adminUser" placeholder="Admin username"><div class="label" style="margin-top:16px">Password</div><input id="adminPass" type="password" placeholder="Admin password" onkeydown="if(event.key===\'Enter\')adminLogin()"><div id="adminError" style="color:#d88;margin-top:12px;font-size:12px"></div><div class="actions"><button class="btn" onclick="adminLogin()">Sign In →</button></div></div></div>');
+      return;
+    }
+    fetch('/api/admin/inquiries',{headers:{Authorization:'Bearer '+token()}}).then(function(r){if(r.status===401){logout();return null}return r.json()}).then(function(data){
+      if(!data)return;
+      var list=Array.isArray(data)?data:(data.inquiries||data.items||[]);
+      var rows='',counts={New:0,Qualified:0,'Review Required':0,Contacted:0};
+      list.forEach(function(x){counts[x.status]=(counts[x.status]||0)+1;rows+='<tr class="click" onclick="go(\\'/admin/inquiries/'+x.id+'\\')"><td><b>'+(x.client||'—')+'</b></td><td>'+(x.project||'—')+'</td><td>'+(x.location||'—')+'</td><td>'+(x.budget||'—')+'</td><td><span class="badge">'+(x.status||'New')+'</span></td><td>'+(x.createdAt||x.date||'')+'</td></tr>';});
+      el('<div class="shell"><div class="ey">Protected account manager workspace</div><div class="top"><div><h2>Production Inquiries</h2><p class="sub">Backend-persisted inquiry queue.</p></div><button class="btn alt" onclick="adminLogout()">Log Out</button></div><div class="stats"><div class="stat"><b>'+counts.New+'</b><span>New</span></div><div class="stat"><b>'+counts.Qualified+'</b><span>Qualified</span></div><div class="stat"><b>'+counts['Review Required']+'</b><span>In Review</span></div><div class="stat"><b>'+counts.Contacted+'</b><span>Contacted</span></div></div><div class="tableWrap"><table class="table"><thead><tr><th>Client</th><th>Project</th><th>Location</th><th>Budget</th><th>Status</th><th>Received</th></tr></thead><tbody>'+rows+'</tbody></table></div></div>');
     });
-    el('<div class="shell"><div class="ey">Account manager workspace</div>'+
-      '<h2>Production Inquiries</h2>'+
-      '<p class="sub">Live demo queue with browser-persisted inquiry state. No external systems are connected.</p>'+
-      '<div class="stats">'+
-      '<div class="stat"><b>'+counts.New+'</b><span>New</span></div>'+
-      '<div class="stat"><b>'+counts.Qualified+'</b><span>Qualified</span></div>'+
-      '<div class="stat"><b>'+counts['Review Required']+'</b><span>In Review</span></div>'+
-      '<div class="stat"><b>'+counts.Contacted+'</b><span>Contacted</span></div></div>'+
-      '<div class="tableWrap"><table class="table"><thead><tr>'+
-      '<th>Client</th><th>Project</th><th>Location</th><th>Budget</th><th>Status</th><th>Received</th>'+
-      '</tr></thead><tbody>'+rows+'</tbody></table></div></div>');
   };
 
   window.detail=function(id){
