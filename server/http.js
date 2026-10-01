@@ -43,6 +43,11 @@ const server = http.createServer(async (req,res)=>{
       return json(res,200,{ok:true});
     }
 
+    if(url.pathname==='/api/ai/intake' && req.method==='POST'){
+      const result=await runProductionPipeline((await body(req)).input || {});
+      return json(res,200,{ok:true,...result});
+    }
+
     if(url.pathname==='/api/inquiries' && req.method==='POST'){
       const result=await runProductionPipeline((await body(req)).input || {});
       const saved=await inquiryStore.createInquiry(result.handoff);
