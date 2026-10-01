@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { URL } from 'node:url';
 import { createSession, hasSession, destroySession } from './auth/session.js';
 import { listInquiries, getInquiry, assignInquiry, markInquiryContacted } from './admin/api.js';
-import { runProductionPipeline } from './agents/index.js';
+import { runWithProvider } from './agents/provider.js';
 import { inquiryStore, initializeStore } from './db/store.js';
 import { researchPublicSource } from './research/index.js';
 
@@ -45,7 +45,7 @@ const server = http.createServer(async (req,res)=>{
     }
 
     if(url.pathname==='/api/ai/intake' && req.method==='POST'){
-      const result=await runProductionPipeline((await body(req)).input || {});
+      const result=await runWithProvider((await body(req)).input || {});
       return json(res,200,{ok:true,...result});
     }
 
@@ -57,7 +57,7 @@ const server = http.createServer(async (req,res)=>{
     }
 
     if(url.pathname==='/api/inquiries' && req.method==='POST'){
-      const result=await runProductionPipeline((await body(req)).input || {});
+      const result=await runWithProvider((await body(req)).input || {});
       const saved=await inquiryStore.createInquiry(result.handoff);
       return json(res,200,{ok:true,inquiryId:saved.id,...result});
     }
@@ -95,4 +95,8 @@ const server = http.createServer(async (req,res)=>{
   }
 });
 
-server.listen(port,async()=>{\n  try { await initializeStore(); console.log('Inquiry store initialized: '+(inquiryStore.available?'postgres':'file')); }\n  catch (error) { console.error('Store initialization failed:',error.message); process.exitCode=1; }\n  console.log('Movie Park AI Assistant API listening on '+port);\n});
+server.listen(port,async()=>{
+  try { await initializeStore(); console.log('Inquiry store initialized: '+(inquiryStore.available?'postgres':'file')); }
+  catch (error) { console.error('Store initialization failed:',error.message); process.exitCode=1; }
+  console.log('Movie Park AI Assistant API listening on '+port);
+});
