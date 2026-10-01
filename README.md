@@ -115,3 +115,8 @@ The demo now includes a dependency-free HTTP server and authenticated admin work
 - Assignment and Contacted actions use the protected backend API.
 
 Configure `ADMIN_USERNAME` and `ADMIN_PASSWORD` before deployment. The current session implementation is process-local and should be replaced with production-grade expiring secure sessions or managed identity before handling real client data.
+
+
+## Production Hardening
+
+Authentication now uses scrypt password hashes and signed 8-hour sessions. The inquiry store automatically uses Postgres when `DATABASE_URL` is configured and otherwise falls back to the local JSON repository for demos. See `DEPLOYMENT.md` for setup. Never commit credentials or secrets.
