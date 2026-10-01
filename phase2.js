@@ -58,7 +58,7 @@
     var m='';
     for(var i=0;i<S.msgs.length;i++)m+='<div class="msg '+S.msgs[i].w+'"><small>'+(S.msgs[i].w==='ai'?'AI Assistant':'You')+'</small>'+esc(S.msgs[i].t)+'</div>';
     var composer='<input id="inp" placeholder="Describe your project, scope, timing, budget, or anything you know…" onkeydown="if(event.key===\'Enter\')answer(this.value)"><button class="btn" onclick="answer(document.getElementById(\'inp\').value)">Send</button>';
-    var ready=filledCount()>=5?'<button class="btn alt" onclick="makeBrief()">Generate Project Brief →</button>':'';
+    var ready=filledCount()>=5?'<button class="btn alt" onclick="makeBrief()">Review Project Brief →</button>':'';
     el('<div class="shell"><div class="top"><div><div class="ey">AI Production Assistant</div><h2>Start a Project Brief</h2><div class="sub">Tell the assistant about the project naturally. It will extract the production requirements as you chat.</div></div><div class="tag">Concept Demo · AI Intake</div></div><div class="chat"><div><div class="messages">'+m+'</div><div class="quick">'+ready+'</div><div class="composer">'+composer+'</div></div><aside class="side"><h3>Project Brief</h3><div class="progress"><div class="p '+(S.a.brand?'done':'')+'"><span></span>Client / Brand</div><div class="p '+(S.a.projectType?'done':'')+'"><span></span>Project Type</div><div class="p '+(S.a.location?'done':'')+'"><span></span>Location</div><div class="p '+(S.a.deliverables?'done':'')+'"><span></span>Deliverables</div><div class="p '+(S.a.deadline?'done':'')+'"><span></span>Timeline</div><div class="p '+(S.a.budget?'done':'')+'"><span></span>Budget</div><div class="p '+(S.a.references?'done':'')+'"><span></span>References</div><div class="p '+(S.a.requirements?'done':'')+'"><span></span>Requirements</div></div><div class="note">AI intake is connected through the backend when an LLM provider is configured. No real Movie Park internal systems are connected.</div></aside></div></div>');
   }
 
@@ -86,7 +86,7 @@
     save();assistant();
   };
 
-  window.makeBrief=async function(){
+  window.makeBrief=function(){
     var b={
       client:S.a.brand||'Demo Client',
       project:S.a.projectType||'Commercial Film',
@@ -99,13 +99,19 @@
     };
     var q=score(b);
     b.score=q.score;b.status=q.status;S.brief=b;
+    save();go('/brief');
+  };
+
+  window.submitBrief=async function(){
+    if(!S.brief) return;
     try{
-      var response=await fetch('/api/inquiries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({input:b})});
+      var response=await fetch('/api/inquiries',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({input:S.brief})});
       var saved=await response.json();
-      if(saved.inquiryId)b.inquiryId=saved.inquiryId;
+      if(saved.inquiryId)S.brief.inquiryId=saved.inquiryId;
     }catch(error){console.warn('Backend inquiry persistence unavailable; keeping local demo state.',error)}
-    var record={id:b.inquiryId||Date.now(),client:b.client,project:b.project,location:b.location,budget:b.budget,status:q.status==='QUALIFIED'?'Qualified':q.status==='REVIEW REQUIRED'?'Review Required':'New',date:'Just now',score:q.score,assigned:'Unassigned'};
-    S.inq.unshift(record);save();go('/brief');
+    var b=S.brief;
+    var record={id:b.inquiryId||Date.now(),client:b.client,project:b.project,location:b.location,budget:b.budget,status:b.status==='QUALIFIED'?'Qualified':b.status==='REVIEW REQUIRED'?'Review Required':'New',date:'Just now',score:b.score,assigned:'Unassigned'};
+    S.inq.unshift(record);save();go('/admin');
   };
 
   window.admin=function(){
@@ -139,6 +145,12 @@
 
   window.contactInquiry=function(id){
     fetch('/api/admin/inquiries/'+encodeURIComponent(id),{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token()},body:JSON.stringify({action:'contact'})}).then(function(){detail(id)});
+  };
+
+  window.brief=function(){
+    var b=S.brief||{};
+    var status=b.status||'IN PROGRESS';
+    el('<div class="shell"><button class="back" onclick="go(\'/assistant\')">← Back to Conversation</button><div class="top"><div><div class="ey">Project Brief · Review</div><h2>'+(b.project||'Project Brief')+'</h2><div class="sub">Review the information captured from your conversation. Nothing is sent to the account manager until you choose to proceed.</div></div><span class="status">'+status+'</span></div><div class="briefGrid"><div class="card"><div class="fields"><div class="field"><div class="label">Client</div><div class="value">'+(b.client||'—')+'</div></div><div class="field"><div class="label">Location</div><div class="value">'+(b.location||'—')+'</div></div><div class="field"><div class="label">Deliverables</div><div class="value">'+(b.deliverables||'—')+'</div></div><div class="field"><div class="label">Timeline</div><div class="value">'+(b.deadline||'—')+'</div></div><div class="field"><div class="label">Budget</div><div class="value">'+(b.budget||'—')+'</div></div><div class="field"><div class="label">Creative Direction</div><div class="value">'+(b.references||'—')+'</div></div></div><div style="margin-top:22px"><div class="label">Additional Requirements</div><p class="sub">'+(b.requirements||'—')+'</p></div><div class="actions"><button class="btn" onclick="submitBrief()">Send to Account Manager →</button><button class="btn alt" onclick="go(\'/assistant\')">Continue Conversation</button></div></div><aside class="card"><div class="ey">AI Analysis</div><div class="analysis"><div class="row"><span>Qualification</span><b>'+((b.score!==undefined)?b.score+'/100':'Not scored')+'</b></div><div class="row"><span>Status</span><b>'+status+'</b></div></div><div class="note">You can continue asking questions before sending this brief. The account manager receives it only after you choose “Send to Account Manager”.</div></aside></div></div>');
   };
 
   var originalRender=window.render;
