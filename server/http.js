@@ -26,7 +26,21 @@ function token(req) {
   return req.headers.authorization?.replace(/^Bearer\s+/i,'');
 }
 
-const server = http.createServer(async (req,res)=>{
+let initializationPromise;
+
+async function ensureInitialized() {
+  if (!initializationPromise) {
+    initializationPromise = initializeStore().catch((error) => {
+      initializationPromise = null;
+      throw error;
+    });
+  }
+  return initializationPromise;
+}
+
+export default async function handler(req, res) {
+  await ensureInitialized();
+async (req,res)=>{
   if(req.method==='OPTIONS') return json(res,204,{});
   try {
     const url = new URL(req.url, 'http://localhost');
@@ -93,10 +107,13 @@ const server = http.createServer(async (req,res)=>{
   } catch(error) {
     return json(res,500,{ok:false,error:error.message});
   }
-});
+}
+}
 
-server.listen(port,async()=>{
-  try { await initializeStore(); console.log('Inquiry store initialized: '+(inquiryStore.available?'postgres':'file')); }
-  catch (error) { console.error('Store initialization failed:',error.message); process.exitCode=1; }
-  console.log('Movie Park AI Assistant API listening on '+port);
-});
+if (process.env.VERCEL !== '1') {
+  const port = Number(process.env.PORT || 3000);
+  const server = http.createServer(handler);
+  server.listen(port, () => {
+    console.log('Movie Park AI Assistant API listening on ' + port);
+  });
+}
